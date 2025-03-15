@@ -1,9 +1,12 @@
-import express from "express";
+import express from 'express';
+import { getUsers, createUser, updateUser, deleteUser } from '../controllers/Product.Controller.js';
 
-import { getalluser,insertnewuser,updateuser,deleteuser } from "../controllers/Product.Controller.js";
-const router=express.Router();
+const router = express.Router();
 
-router.get("/",getalluser)
-router.post("/",insertnewuser)
+// Define routes
+router.get('/', getUsers);       // GET /users
+router.post('/', createUser);   // POST /users
+router.put('/:id', updateUser);  // PUT /users/:id
+router.delete('/:id', deleteUser); // DELETE /users/:id
 
 export default router;

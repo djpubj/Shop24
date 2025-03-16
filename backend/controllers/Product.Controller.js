@@ -1,72 +1,68 @@
-import supabase from '../config/Db.js';
+import Product from "../models/Product.Model.js";
+import mongoose from "mongoose";
 
-// Fetch all users
-export const getUsers = async (req, res) => {
-    try {
-        const { data, error } = await supabase
-            .from('users')
-            .select('*');
-
-        if (error) throw error;
-
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+export const getProducts = async (req, res) => {
+	try {
+		const products = await Product.find({});
+		res.status(200).json({ success: true, data: products });
+	} catch (error) {
+		console.log("error in fetching products:", error.message);
+		res.status(500).json({ success: false, message: "Server Error" });
+	}
 };
 
-// Create a new user
-export const createUser = async (req, res) => {
-    try {
-        const { name, email } = req.body;
-
-        const { data, error } = await supabase
-            .from('users')
-            .insert([{ name, email }])
-            .select('*'); // Return the inserted data
-
-        if (error) throw error;
-
-        res.status(201).json(data);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+export const createProduct= async (req, res) => {
+    const product = req.body;
+    if (!product.name || !product.price || !product.image) {
+        return res.status(400).json({ success: false, message: "please provide all fields" });
     }
+    const newProduct = new Product(product);
+    try {
+        await newProduct.save();
+        res.status(201).json({ success: true, data: newProduct });
+    } catch (error) {
+        console.error("Error in create product:", error.message);
+        res.status(500).json({ success: false, message: "server error" });
+    }
+}
+
+export const updateProduct = async (req, res) => {
+	const { id } = req.params; 
+	//the curly braces {} are used for object destructuring in JavaScript. ===> const id = req.params.id;
+
+	const product = req.body;
+
+
+	if (!product.name || !product.price || !product.image) {   //updated
+        return res.status(400).json({ success: false, message: "please provide all fields" });
+    }
+
+
+
+	if (!mongoose.Types.ObjectId.isValid(id)) {
+		return res.status(404).json({ success: false, message: "Invalid Product Id" });
+	}
+
+	try {
+		const updatedProduct = await Product.findByIdAndUpdate(id, product, { new: true });
+		res.status(200).json({ success: true, data: updatedProduct });
+	} catch (error) {
+		res.status(500).json({ success: false, message: "Server Error" });
+	}
 };
 
-// Update a user
-export const updateUser = async (req, res) => {
-    try {
-        const { id } = req.params; // Get user ID from URL params
-        const { name, email } = req.body;
+export const deleteProduct = async (req, res) => {
+	const { id } = req.params;
 
-        const { data, error } = await supabase
-            .from('users')
-            .update({ name, email })
-            .eq('id', id) // Match the user by ID
-            .select('*'); // Return the updated data
+	if (!mongoose.Types.ObjectId.isValid(id)) {
+		return res.status(404).json({ success: false, message: "Invalid Product Id" });
+	}
 
-        if (error) throw error;
-
-        res.status(200).json(data);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+	try {
+		await Product.findByIdAndDelete(id);
+		res.status(200).json({ success: true, message: "Product deleted" });
+	} catch (error) {
+		console.log("error in deleting product:", error.message);
+		res.status(500).json({ success: false, message: "Server Error" });
+	}
 };
-
-// Delete a user
-export const deleteUser = async (req, res) => {
-    try {
-        const { id } = req.params; // Get user ID from URL params
-
-        const { data, error } = await supabase
-            .from('users')
-            .delete()
-            .eq('id', id); // Match the user by ID
-
-        if (error) throw error;
-
-        res.status(200).json({ message: 'User deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-}; 
